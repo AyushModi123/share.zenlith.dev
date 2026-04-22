@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Share Zenlith</title>
+    <title>Share - Fast P2P File Transfer</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -533,8 +534,11 @@
 
         function updateProgress(current, total) {
             const percent = Math.min(100, Math.round((current / total) * 100));
-            progressBar.style.width = `${percent}%`;
-            progressPercent.textContent = `${percent}%`;
+            if (updateProgress.lastPercent !== percent) {
+                updateProgress.lastPercent = percent;
+                progressBar.style.width = `${percent}%`;
+                progressPercent.textContent = `${percent}%`;
+            }
         }
 
         // WebRTC Logic
@@ -617,12 +621,12 @@
         }
 
         async function sendFile() {
-            const chunkSize = 16384; // 16KB
+            const chunkSize = 65536; // 64KB
             let offset = 0;
 
             while (offset < outgoingFile.size) {
-                // Flow control: Wait if buffer gets too full (e.g., > 64KB)
-                if (dataChannel.bufferedAmount > 65535) {
+                // Flow control: Wait if buffer gets too full (e.g., > 16MB)
+                if (dataChannel.bufferedAmount > 16777216) {
                     await new Promise(resolve => setTimeout(resolve, 5));
                     continue;
                 }
