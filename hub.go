@@ -32,6 +32,13 @@ func (h *Hub) Register(c *Client) {
 	}
 	h.mu.RUnlock()
 
+	// Send the new client their own identity first
+	c.send <- mustMarshal(Message{
+		Type: "welcome",
+		From: c.id,
+		Name: c.name,
+	})
+
 	c.send <- mustMarshal(Message{
 		Type:  "peers",
 		Peers: peers,

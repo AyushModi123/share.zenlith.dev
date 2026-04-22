@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Zenlith</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: rgba(30, 41, 59, 0.7);
+            --surface-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
+            background-image: radial-gradient(circle at top right, rgba(59, 130, 246, 0.15), transparent 40%),
+                radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.1), transparent 40%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--surface-border);
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(12px);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .identity-badge {
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            backdrop-filter: blur(8px);
+        }
+
+        .identity-badge::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-color);
+            box-shadow: 0 0 8px var(--success-color);
+        }
+
+        main {
+            flex: 1;
+            padding: 3rem 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-top: 4rem;
+            font-size: 1.1rem;
+        }
+
+        .peers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .peer-card {
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .peer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .peer-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .peer-card:hover::before {
+            opacity: 1;
+        }
+
+        .avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-color), #8b5cf6);
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .peer-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* Overlay & Modals */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: #1e293b;
+            border: 1px solid var(--surface-border);
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .overlay.active .modal {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal h2 {
+            margin: 0 0 1rem;
+            font-size: 1.25rem;
+        }
+
+        .modal p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            padding: 1rem 1.5rem;
+            border-radius: 1rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 400px;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 40;
+        }
+
+        .progress-container.active {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        .progress-track {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #34d399);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        /* Notifications Toast */
+        #toast {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            backdrop-filter: blur(12px);
+            color: white;
+            font-size: 0.875rem;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        #toast.active {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Share</h1>
+        <div class="identity-badge" id="my-identity">Connecting...</div>
+    </header>
+
+    <main>
+        <div class="empty-state" id="empty-state">
+            Looking for devices...
+        </div>
+        <div class="peers-grid" id="peers-grid" style="display: none;"></div>
+    </main>
+
+    <input type="file" id="file-input" style="display: none;">
+
+    <div class="overlay" id="confirm-modal">
+        <div class="modal">
+            <h2>Incoming File</h2>
+            <p id="confirm-text"></p>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="declineFile()">Decline</button>
+                <button class="btn btn-primary" onclick="acceptFile()">Accept</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="progress-container" id="progress-ui">
+        <div class="progress-text">
+            <span id="progress-label">Sending...</span>
+            <span id="progress-percent">0%</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progress-bar"></div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        // State
+        const peers = new Map();
+        let myId = null;
+        let myName = null;
+        let targetPeerId = null;
+
+        // WebRTC State
+        let pc = null;
+        let dataChannel = null;
+        let outgoingFile = null;
+        let incomingFileMeta = null;
+        let receiveBuffer = [];
+        let receivedSize = 0;
+
+        // Elements
+        const grid = document.getElementById('peers-grid');
+        const emptyState = document.getElementById('empty-state');
+        const fileInput = document.getElementById('file-input');
+        const modal = document.getElementById('confirm-modal');
+        const confirmText = document.getElementById('confirm-text');
+        const progressUi = document.getElementById('progress-ui');
+        const progressLabel = document.getElementById('progress-label');
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = document.getElementById('progress-percent');
+        const toastEl = document.getElementById('toast');
+
+        // WebSocket Setup
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = 'share-ws.zenlith.dev';
+        const wsUrl = `${protocol}//${host}/ws`;
+
+        let ws;
+
+        function connectWebSocket() {
+            ws = new WebSocket(wsUrl);
+
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+
+                switch (msg.type) {
+                    case 'welcome':
+                        myId = msg.from;
+                        myName = msg.name;
+                        document.getElementById('my-identity').textContent = myName;
+                        break;
+                    case 'peers':
+                        if (msg.peers) {
+                            msg.peers.forEach(p => peers.set(p.id, p.name));
+                            renderPeers();
+                        }
+                        break;
+                    case 'peer-joined':
+                        peers.set(msg.from, msg.name);
+                        renderPeers();
+                        showToast(`${msg.name} joined`);
+                        break;
+                    case 'peer-left':
+                        const name = peers.get(msg.from);
+                        peers.delete(msg.from);
+                        renderPeers();
+                        if (name) showToast(`${name} left`);
+                        // Clean up if disconnected mid-transfer
+                        if (targetPeerId === msg.from) {
+                            resetTransfer();
+                            showToast('Transfer interrupted (peer left)');
+                        }
+                        break;
+                    case 'file-offer':
+                        incomingFileMeta = msg;
+                        targetPeerId = msg.from;
+                        const sizeMb = (msg.fileSize / (1024 * 1024)).toFixed(1);
+                        const senderName = peers.get(msg.from) || 'Someone';
+                        confirmText.textContent = `${senderName} wants to send you "${msg.fileName}" (${sizeMb} MB)`;
+                        modal.classList.add('active');
+                        break;
+                    case 'file-accept':
+                        showToast('Transfer accepted. Starting...');
+                        setupWebRTC(true, msg.from);
+                        break;
+                    case 'file-decline':
+                        showToast('Transfer was declined.');
+                        resetTransfer();
+                        break;
+                    case 'offer':
+                        setupWebRTC(false, msg.from);
+                        pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(msg.sdp)))
+                            .then(() => pc.createAnswer())
+                            .then(answer => pc.setLocalDescription(answer))
+                            .then(() => {
+                                ws.send(JSON.stringify({ type: 'answer', to: msg.from, sdp: JSON.stringify(pc.localDescription) }));
+                            });
+                        break;
+                    case 'answer':
+                        pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(msg.sdp)));
+                        break;
+                    case 'ice-candidate':
+                        if (pc) {
+                            pc.addIceCandidate(new RTCIceCandidate(JSON.parse(msg.candidate))).catch(e => console.error(e));
+                        }
+                        break;
+                }
+            };
+
+            ws.onclose = () => {
+                document.getElementById('my-identity').textContent = 'Disconnected';
+                document.getElementById('my-identity').style.color = 'var(--danger-color)';
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        connectWebSocket();
+
+        // UI Logic
+        function renderPeers() {
+            if (peers.size === 0) {
+                grid.style.display = 'none';
+                emptyState.style.display = 'block';
+                emptyState.textContent = 'No other devices found on this network.';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            emptyState.style.display = 'none';
+            grid.innerHTML = '';
+
+            peers.forEach((name, id) => {
+                const card = document.createElement('div');
+                card.className = 'peer-card';
+                card.onclick = () => selectPeer(id);
+
+                const initials = name.split(' ').map(w => w[0]).join('');
+
+                card.innerHTML = `
+                    <div class="avatar">${initials}</div>
+                    <div class="peer-name">${name}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function showToast(message) {
+            toastEl.textContent = message;
+            toastEl.classList.add('active');
+            setTimeout(() => toastEl.classList.remove('active'), 3000);
+        }
+
+        function selectPeer(id) {
+            if (pc || outgoingFile) {
+                showToast('A transfer is already in progress');
+                return;
+            }
+            targetPeerId = id;
+            fileInput.click();
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length === 0) return;
+            outgoingFile = e.target.files[0];
+
+            ws.send(JSON.stringify({
+                type: 'file-offer',
+                to: targetPeerId,
+                fileName: outgoingFile.name,
+                fileSize: outgoingFile.size,
+                fileType: outgoingFile.type
+            }));
+
+            showToast('Waiting for peer to accept...');
+        });
+
+        function acceptFile() {
+            modal.classList.remove('active');
+            ws.send(JSON.stringify({ type: 'file-accept', to: targetPeerId }));
+            showProgressUI(`Receiving ${incomingFileMeta.fileName}...`);
+        }
+
+        function declineFile() {
+            modal.classList.remove('active');
+            ws.send(JSON.stringify({ type: 'file-decline', to: targetPeerId }));
+            resetTransfer();
+        }
+
+        function showProgressUI(label) {
+            progressLabel.textContent = label;
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressUi.classList.add('active');
+        }
+
+        function updateProgress(current, total) {
+            const percent = Math.min(100, Math.round((current / total) * 100));
+            progressBar.style.width = `${percent}%`;
+            progressPercent.textContent = `${percent}%`;
+        }
+
+        // WebRTC Logic
+        const rtcConfig = {
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        };
+
+        function setupWebRTC(isInitiator, peerId) {
+            pc = new RTCPeerConnection(rtcConfig);
+
+            pc.onicecandidate = (e) => {
+                if (e.candidate) {
+                    ws.send(JSON.stringify({
+                        type: 'ice-candidate',
+                        to: peerId,
+                        candidate: JSON.stringify(e.candidate)
+                    }));
+                }
+            };
+
+            pc.onconnectionstatechange = () => {
+                if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+                    showToast('Connection lost');
+                    resetTransfer();
+                }
+            };
+
+            if (isInitiator) {
+                dataChannel = pc.createDataChannel('fileTransfer', {
+                    ordered: true
+                });
+                setupDataChannel(dataChannel, true);
+
+                pc.createOffer()
+                    .then(offer => pc.setLocalDescription(offer))
+                    .then(() => {
+                        ws.send(JSON.stringify({
+                            type: 'offer',
+                            to: peerId,
+                            sdp: JSON.stringify(pc.localDescription)
+                        }));
+                    });
+            } else {
+                pc.ondatachannel = (e) => {
+                    dataChannel = e.channel;
+                    setupDataChannel(dataChannel, false);
+                };
+            }
+        }
+
+        function setupDataChannel(channel, isSender) {
+            channel.binaryType = 'arraybuffer';
+
+            channel.onopen = () => {
+                if (isSender) {
+                    showProgressUI(`Sending ${outgoingFile.name}...`);
+                    sendFile();
+                }
+            };
+
+            channel.onmessage = (e) => {
+                if (!isSender) {
+                    receiveBuffer.push(e.data);
+                    receivedSize += e.data.byteLength;
+
+                    updateProgress(receivedSize, incomingFileMeta.fileSize);
+
+                    if (receivedSize === incomingFileMeta.fileSize) {
+                        const blob = new Blob(receiveBuffer, { type: incomingFileMeta.fileType || 'application/octet-stream' });
+                        downloadBlob(blob, incomingFileMeta.fileName);
+                        showToast('Transfer complete!');
+                        setTimeout(resetTransfer, 1000);
+                    }
+                }
+            };
+
+            channel.onclose = () => {
+                resetTransfer();
+            };
+        }
+
+        async function sendFile() {
+            const chunkSize = 16384; // 16KB
+            let offset = 0;
+
+            while (offset < outgoingFile.size) {
+                // Flow control: Wait if buffer gets too full (e.g., > 64KB)
+                if (dataChannel.bufferedAmount > 65535) {
+                    await new Promise(resolve => setTimeout(resolve, 5));
+                    continue;
+                }
+
+                if (dataChannel.readyState !== 'open') break;
+
+                const slice = outgoingFile.slice(offset, offset + chunkSize);
+                const buffer = await slice.arrayBuffer();
+
+                try {
+                    dataChannel.send(buffer);
+                } catch (e) {
+                    console.error('Send failed:', e);
+                    break;
+                }
+
+                offset += buffer.byteLength;
+                updateProgress(offset, outgoingFile.size);
+            }
+
+            showToast('Transfer complete!');
+            setTimeout(resetTransfer, 1000);
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function resetTransfer() {
+            if (dataChannel) {
+                dataChannel.close();
+                dataChannel = null;
+            }
+            if (pc) {
+                pc.close();
+                pc = null;
+            }
+            outgoingFile = null;
+            incomingFileMeta = null;
+            receiveBuffer = [];
+            receivedSize = 0;
+            targetPeerId = null;
+            fileInput.value = '';
+            progressUi.classList.remove('active');
+        }
+    </script>
+</body>
+
+</html>
