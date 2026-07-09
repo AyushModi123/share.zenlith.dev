@@ -20,6 +20,10 @@
             --danger-color: #ef4444;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             font-family: 'Inter', sans-serif;
@@ -34,10 +38,12 @@
         }
 
         header {
-            padding: 2rem;
+            padding: 1.5rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
             border-bottom: 1px solid var(--surface-border);
             background: rgba(15, 23, 42, 0.5);
             backdrop-filter: blur(12px);
@@ -49,7 +55,15 @@
             font-weight: 600;
             background: linear-gradient(to right, #60a5fa, #34d399);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
         }
 
         .identity-badge {
@@ -74,13 +88,62 @@
             box-shadow: 0 0 8px var(--success-color);
         }
 
+        /* Room / scope control */
+        .room-bar {
+            max-width: 1000px;
+            margin: 1.5rem auto 0;
+            width: 100%;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .scope-info {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .scope-info strong {
+            color: var(--text-primary);
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .room-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-chip {
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            color: var(--text-primary);
+            padding: 0.45rem 0.9rem;
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-chip:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
         main {
             flex: 1;
-            padding: 3rem 2rem;
+            padding: 2rem;
             max-width: 1000px;
             margin: 0 auto;
             width: 100%;
-            box-sizing: border-box;
         }
 
         .empty-state {
@@ -88,6 +151,13 @@
             color: var(--text-secondary);
             margin-top: 4rem;
             font-size: 1.1rem;
+        }
+
+        .hint {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            opacity: 0.7;
         }
 
         .peers-grid {
@@ -103,46 +173,61 @@
             padding: 1.5rem;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s, box-shadow 0.3s;
             backdrop-filter: blur(8px);
             position: relative;
             overflow: hidden;
+            font: inherit;
+            color: inherit;
+            width: 100%;
+            display: block;
         }
 
         .peer-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
             opacity: 0;
             transition: opacity 0.3s;
+            pointer-events: none;
         }
 
-        .peer-card:hover {
+        .peer-card:hover,
+        .peer-card:focus-visible {
             transform: translateY(-4px);
             border-color: rgba(255, 255, 255, 0.2);
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            outline: none;
+        }
+
+        .peer-card:focus-visible {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
         }
 
         .peer-card:hover::before {
             opacity: 1;
         }
 
+        .peer-card.drag-over {
+            border-color: var(--success-color);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.4);
+            transform: translateY(-4px) scale(1.02);
+        }
+
         .avatar {
             width: 64px;
             height: 64px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-color), #8b5cf6);
             margin: 0 auto 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
+            font-weight: 600;
             color: white;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         .peer-name {
@@ -150,13 +235,82 @@
             color: var(--text-primary);
         }
 
+        .peer-sub {
+            margin-top: 0.35rem;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+
+        /* Transfer history */
+        .history {
+            margin-top: 3rem;
+        }
+
+        .history h2 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0 0 1rem;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .history-item .dir {
+            font-size: 1.1rem;
+        }
+
+        .history-item .meta {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .history-item .fname {
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-item .fsize {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+        }
+
+        .history-item a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+
+        .history-item a:hover {
+            text-decoration: underline;
+        }
+
         /* Overlay & Modals */
         .overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(4px);
             display: flex;
@@ -166,6 +320,7 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s;
+            padding: 1rem;
         }
 
         .overlay.active {
@@ -178,8 +333,8 @@
             border: 1px solid var(--surface-border);
             border-radius: 1rem;
             padding: 2rem;
-            max-width: 400px;
-            width: 90%;
+            max-width: 420px;
+            width: 100%;
             text-align: center;
             transform: translateY(20px) scale(0.95);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -199,6 +354,38 @@
             color: var(--text-secondary);
             margin-bottom: 2rem;
             line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .room-code-display {
+            font-size: 1.6rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--surface-border);
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            margin: 0 0 1rem;
+            user-select: all;
+        }
+
+        .share-link {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .share-link input {
+            flex: 1;
+            min-width: 0;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--surface-border);
+            border-radius: 0.5rem;
+            color: var(--text-secondary);
+            padding: 0.6rem 0.75rem;
+            font-family: inherit;
+            font-size: 0.82rem;
         }
 
         .btn-group {
@@ -215,6 +402,12 @@
             cursor: pointer;
             transition: all 0.2s;
             font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 2px;
         }
 
         .btn-primary {
@@ -241,7 +434,7 @@
             position: fixed;
             bottom: 2rem;
             left: 50%;
-            transform: translateX(-50%) translateY(100px);
+            transform: translateX(-50%) translateY(160px);
             background: var(--surface-color);
             border: 1px solid var(--surface-border);
             padding: 1rem 1.5rem;
@@ -261,9 +454,17 @@
         .progress-text {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             margin-bottom: 0.5rem;
             font-size: 0.875rem;
             color: var(--text-primary);
+            gap: 0.75rem;
+        }
+
+        .progress-text .label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .progress-track {
@@ -280,12 +481,34 @@
             transition: width 0.1s linear;
         }
 
+        .progress-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.6rem;
+        }
+
+        .btn-cancel {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.8rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.4rem;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(239, 68, 68, 0.12);
+        }
+
         /* Notifications Toast */
         #toast {
             position: fixed;
             top: 1rem;
             left: 50%;
-            transform: translateX(-50%) translateY(-100px);
+            transform: translateX(-50%) translateY(-120px);
             background: var(--surface-color);
             border: 1px solid var(--surface-border);
             padding: 0.75rem 1.5rem;
@@ -296,6 +519,8 @@
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 100;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            max-width: 90vw;
+            text-align: center;
         }
 
         #toast.active {
@@ -307,57 +532,123 @@
 <body>
     <header>
         <h1>Share</h1>
-        <div class="identity-badge" id="my-identity">Connecting...</div>
+        <div class="header-right">
+            <div class="identity-badge" id="my-identity">Connecting…</div>
+        </div>
     </header>
+
+    <div class="room-bar">
+        <div class="scope-info" id="scope-info">Finding devices…</div>
+        <div class="room-actions" id="room-actions"></div>
+    </div>
 
     <main>
         <div class="empty-state" id="empty-state">
-            Looking for devices...
+            Looking for devices…
         </div>
         <div class="peers-grid" id="peers-grid" style="display: none;"></div>
+
+        <section class="history" id="history" style="display: none;">
+            <h2>Recent transfers</h2>
+            <ul class="history-list" id="history-list"></ul>
+        </section>
     </main>
 
     <input type="file" id="file-input" style="display: none;">
 
-    <div class="overlay" id="confirm-modal">
+    <!-- Incoming file confirmation -->
+    <div class="overlay" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
         <div class="modal">
-            <h2>Incoming File</h2>
+            <h2 id="confirm-title">Incoming File</h2>
             <p id="confirm-text"></p>
             <div class="btn-group">
-                <button class="btn btn-secondary" onclick="declineFile()">Decline</button>
-                <button class="btn btn-primary" onclick="acceptFile()">Accept</button>
+                <button class="btn btn-secondary" id="decline-btn">Decline</button>
+                <button class="btn btn-primary" id="accept-btn">Accept</button>
             </div>
         </div>
     </div>
 
+    <!-- Room share dialog -->
+    <div class="overlay" id="room-modal" role="dialog" aria-modal="true" aria-labelledby="room-title">
+        <div class="modal">
+            <h2 id="room-title">Private room</h2>
+            <p>Share this code or link. Anyone who opens it — on any network — lands in the same room as you.</p>
+            <div class="room-code-display" id="room-code-display"></div>
+            <div class="share-link">
+                <input type="text" id="share-link-input" readonly aria-label="Shareable room link">
+                <button class="btn btn-primary" id="copy-link-btn">Copy</button>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="room-close-btn">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer progress -->
     <div class="progress-container" id="progress-ui">
         <div class="progress-text">
-            <span id="progress-label">Sending...</span>
+            <span class="label" id="progress-label">Sending…</span>
             <span id="progress-percent">0%</span>
         </div>
         <div class="progress-track">
             <div class="progress-fill" id="progress-bar"></div>
         </div>
+        <div class="progress-footer">
+            <span id="progress-detail" style="font-size:0.78rem;color:var(--text-secondary);"></span>
+            <button class="btn-cancel" id="cancel-btn">Cancel</button>
+        </div>
     </div>
 
-    <div id="toast"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
 
     <script>
+        // ---------------------------------------------------------------
+        // Connection target
+        // ---------------------------------------------------------------
+        // Derive the signaling host from where the page is served so that
+        // local development (page + server on the same origin) works with
+        // zero config. Known production hosts map to their WS subdomain.
+        const WS_HOST_OVERRIDES = {
+            'share.zenlith.dev': 'share-ws.zenlith.dev'
+        };
+        const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsHost = WS_HOST_OVERRIDES[location.hostname] || location.host;
+
+        // Room code (if any) is carried in the URL hash: #room=CODE
+        function currentRoomCode() {
+            const m = location.hash.match(/room=([A-Za-z0-9_-]{1,32})/);
+            return m ? m[1] : '';
+        }
+
+        function buildWsUrl() {
+            let url = `${wsProtocol}//${wsHost}/ws`;
+            const code = currentRoomCode();
+            if (code) url += `?room=${encodeURIComponent(code)}`;
+            return url;
+        }
+
+        // ---------------------------------------------------------------
         // State
+        // ---------------------------------------------------------------
         const peers = new Map();
         let myId = null;
         let myName = null;
+        let myRoom = null;          // server-assigned room (code-xxx or net-xxx)
         let targetPeerId = null;
 
-        // WebRTC State
+        // WebRTC state
         let pc = null;
         let dataChannel = null;
         let outgoingFile = null;
         let incomingFileMeta = null;
         let receiveBuffer = [];
         let receivedSize = 0;
+        let transferActive = false;
+        const pendingOffers = [];   // queued incoming file-offers
 
+        // ---------------------------------------------------------------
         // Elements
+        // ---------------------------------------------------------------
         const grid = document.getElementById('peers-grid');
         const emptyState = document.getElementById('empty-state');
         const fileInput = document.getElementById('file-input');
@@ -367,100 +658,228 @@
         const progressLabel = document.getElementById('progress-label');
         const progressBar = document.getElementById('progress-bar');
         const progressPercent = document.getElementById('progress-percent');
+        const progressDetail = document.getElementById('progress-detail');
         const toastEl = document.getElementById('toast');
+        const scopeInfo = document.getElementById('scope-info');
+        const roomActions = document.getElementById('room-actions');
+        const historySection = document.getElementById('history');
+        const historyList = document.getElementById('history-list');
+        const roomModal = document.getElementById('room-modal');
 
-        // WebSocket Setup
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = 'share-ws.zenlith.dev';
-        const wsUrl = `${protocol}//${host}/ws`;
-
+        // ---------------------------------------------------------------
+        // WebSocket
+        // ---------------------------------------------------------------
         let ws;
+        let reconnectTimer = null;
 
         function connectWebSocket() {
-            ws = new WebSocket(wsUrl);
+            ws = new WebSocket(buildWsUrl());
+
+            ws.onopen = () => {
+                // Fresh session: clear any stale peers from a previous socket.
+                peers.clear();
+                renderPeers();
+            };
 
             ws.onmessage = (event) => {
-                const msg = JSON.parse(event.data);
-
-                switch (msg.type) {
-                    case 'welcome':
-                        myId = msg.from;
-                        myName = msg.name;
-                        document.getElementById('my-identity').textContent = myName;
-                        break;
-                    case 'peers':
-                        if (msg.peers) {
-                            msg.peers.forEach(p => peers.set(p.id, p.name));
-                            renderPeers();
-                        }
-                        break;
-                    case 'peer-joined':
-                        peers.set(msg.from, msg.name);
-                        renderPeers();
-                        showToast(`${msg.name} joined`);
-                        break;
-                    case 'peer-left':
-                        const name = peers.get(msg.from);
-                        peers.delete(msg.from);
-                        renderPeers();
-                        if (name) showToast(`${name} left`);
-                        // Clean up if disconnected mid-transfer
-                        if (targetPeerId === msg.from) {
-                            resetTransfer();
-                            showToast('Transfer interrupted (peer left)');
-                        }
-                        break;
-                    case 'file-offer':
-                        incomingFileMeta = msg;
-                        targetPeerId = msg.from;
-                        const sizeMb = (msg.fileSize / (1024 * 1024)).toFixed(1);
-                        const senderName = peers.get(msg.from) || 'Someone';
-                        confirmText.textContent = `${senderName} wants to send you "${msg.fileName}" (${sizeMb} MB)`;
-                        modal.classList.add('active');
-                        break;
-                    case 'file-accept':
-                        showToast('Transfer accepted. Starting...');
-                        setupWebRTC(true, msg.from);
-                        break;
-                    case 'file-decline':
-                        showToast('Transfer was declined.');
-                        resetTransfer();
-                        break;
-                    case 'offer':
-                        setupWebRTC(false, msg.from);
-                        pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(msg.sdp)))
-                            .then(() => pc.createAnswer())
-                            .then(answer => pc.setLocalDescription(answer))
-                            .then(() => {
-                                ws.send(JSON.stringify({ type: 'answer', to: msg.from, sdp: JSON.stringify(pc.localDescription) }));
-                            });
-                        break;
-                    case 'answer':
-                        pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(msg.sdp)));
-                        break;
-                    case 'ice-candidate':
-                        if (pc) {
-                            pc.addIceCandidate(new RTCIceCandidate(JSON.parse(msg.candidate))).catch(e => console.error(e));
-                        }
-                        break;
+                let msg;
+                try {
+                    msg = JSON.parse(event.data);
+                } catch {
+                    return;
                 }
+                handleSignal(msg);
             };
 
             ws.onclose = () => {
-                document.getElementById('my-identity').textContent = 'Disconnected';
+                document.getElementById('my-identity').textContent = 'Reconnecting…';
                 document.getElementById('my-identity').style.color = 'var(--danger-color)';
-                setTimeout(connectWebSocket, 3000);
+                peers.clear();
+                renderPeers();
+                if (!reconnectTimer) {
+                    reconnectTimer = setTimeout(() => {
+                        reconnectTimer = null;
+                        connectWebSocket();
+                    }, 3000);
+                }
             };
+        }
+
+        function handleSignal(msg) {
+            switch (msg.type) {
+                case 'welcome':
+                    myId = msg.from;
+                    myName = msg.name;
+                    myRoom = msg.room || '';
+                    const idEl = document.getElementById('my-identity');
+                    idEl.textContent = myName;
+                    idEl.style.color = '';
+                    renderScope();
+                    renderPeers(); // refresh empty-state copy now that room is known
+                    break;
+
+                case 'peers':
+                    if (msg.peers) {
+                        msg.peers.forEach(p => peers.set(p.id, p.name));
+                        renderPeers();
+                    }
+                    break;
+
+                case 'peer-joined':
+                    peers.set(msg.from, msg.name);
+                    renderPeers();
+                    showToast(`${msg.name} joined`);
+                    break;
+
+                case 'peer-left': {
+                    const name = peers.get(msg.from);
+                    peers.delete(msg.from);
+                    renderPeers();
+                    if (name) showToast(`${name} left`);
+                    if (targetPeerId === msg.from && transferActive) {
+                        resetTransfer();
+                        showToast('Transfer interrupted (peer left)');
+                    }
+                    // Drop any queued offer from a peer that just left.
+                    for (let i = pendingOffers.length - 1; i >= 0; i--) {
+                        if (pendingOffers[i].from === msg.from) pendingOffers.splice(i, 1);
+                    }
+                    break;
+                }
+
+                case 'file-offer':
+                    pendingOffers.push(msg);
+                    maybeShowNextOffer();
+                    break;
+
+                case 'file-accept':
+                    showToast('Transfer accepted. Starting…');
+                    setupWebRTC(true, msg.from);
+                    break;
+
+                case 'file-decline':
+                    showToast('Transfer was declined.');
+                    resetTransfer();
+                    break;
+
+                case 'offer':
+                    setupWebRTC(false, msg.from);
+                    pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(msg.sdp)))
+                        .then(() => pc.createAnswer())
+                        .then(answer => pc.setLocalDescription(answer))
+                        .then(() => {
+                            wsSend({ type: 'answer', to: msg.from, sdp: JSON.stringify(pc.localDescription) });
+                        })
+                        .catch(e => console.error('offer handling failed', e));
+                    break;
+
+                case 'answer':
+                    if (pc) {
+                        pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(msg.sdp)))
+                            .catch(e => console.error('answer handling failed', e));
+                    }
+                    break;
+
+                case 'ice-candidate':
+                    if (pc) {
+                        pc.addIceCandidate(new RTCIceCandidate(JSON.parse(msg.candidate)))
+                            .catch(e => console.error('addIceCandidate failed', e));
+                    }
+                    break;
+            }
+        }
+
+        function wsSend(obj) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(obj));
+            }
         }
 
         connectWebSocket();
 
-        // UI Logic
+        // ---------------------------------------------------------------
+        // Room / scope UI
+        // ---------------------------------------------------------------
+        function inPrivateRoom() {
+            return myRoom && myRoom.startsWith('code-');
+        }
+
+        function roomCodeLabel() {
+            return inPrivateRoom() ? myRoom.slice('code-'.length) : '';
+        }
+
+        function renderScope() {
+            roomActions.innerHTML = '';
+            if (inPrivateRoom()) {
+                scopeInfo.innerHTML = `Private room <strong>${escapeHtml(roomCodeLabel())}</strong>`;
+                addChip('Invite', openRoomModal);
+                addChip('Leave room', leaveRoom);
+            } else {
+                scopeInfo.innerHTML = `Devices on <strong>your network</strong>`;
+                addChip('Create private room', createRoom);
+            }
+        }
+
+        function addChip(label, handler) {
+            const b = document.createElement('button');
+            b.className = 'btn-chip';
+            b.textContent = label;
+            b.addEventListener('click', handler);
+            roomActions.appendChild(b);
+        }
+
+        function createRoom() {
+            const code = randomCode(6);
+            location.hash = `room=${code}`;
+            location.reload();
+        }
+
+        function leaveRoom() {
+            history.replaceState(null, '', location.pathname + location.search);
+            location.reload();
+        }
+
+        function randomCode(len) {
+            const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no ambiguous chars
+            const bytes = new Uint8Array(len);
+            crypto.getRandomValues(bytes);
+            let out = '';
+            for (const b of bytes) out += alphabet[b % alphabet.length];
+            return out;
+        }
+
+        function openRoomModal() {
+            const code = roomCodeLabel();
+            document.getElementById('room-code-display').textContent = code;
+            const link = `${location.origin}${location.pathname}#room=${code}`;
+            document.getElementById('share-link-input').value = link;
+            roomModal.classList.add('active');
+        }
+
+        document.getElementById('room-close-btn').addEventListener('click', () => {
+            roomModal.classList.remove('active');
+        });
+        document.getElementById('copy-link-btn').addEventListener('click', async () => {
+            const input = document.getElementById('share-link-input');
+            try {
+                await navigator.clipboard.writeText(input.value);
+            } catch {
+                input.select();
+                document.execCommand('copy');
+            }
+            showToast('Link copied');
+        });
+
+        // ---------------------------------------------------------------
+        // Peer rendering
+        // ---------------------------------------------------------------
         function renderPeers() {
             if (peers.size === 0) {
                 grid.style.display = 'none';
                 emptyState.style.display = 'block';
-                emptyState.textContent = 'No other devices found on this network.';
+                emptyState.innerHTML = inPrivateRoom()
+                    ? `No one else is in this room yet.<span class="hint">Share the invite link to connect across networks.</span>`
+                    : `No other devices found on your network.<span class="hint">On a different network? Create a private room to pair.</span>`;
                 return;
             }
 
@@ -469,118 +888,224 @@
             grid.innerHTML = '';
 
             peers.forEach((name, id) => {
-                const card = document.createElement('div');
+                const card = document.createElement('button');
                 card.className = 'peer-card';
-                card.onclick = () => selectPeer(id);
+                card.type = 'button';
+                card.setAttribute('aria-label', `Send a file to ${name}`);
+                card.addEventListener('click', () => selectPeer(id));
 
-                const initials = name.split(' ').map(w => w[0]).join('');
+                const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2);
+                const hue = hueForId(id);
 
-                card.innerHTML = `
-                    <div class="avatar">${initials}</div>
-                    <div class="peer-name">${name}</div>
-                `;
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar';
+                avatar.style.background = `linear-gradient(135deg, hsl(${hue} 70% 55%), hsl(${(hue + 40) % 360} 70% 45%))`;
+                avatar.textContent = initials;
+
+                const nameEl = document.createElement('div');
+                nameEl.className = 'peer-name';
+                nameEl.textContent = name;
+
+                const sub = document.createElement('div');
+                sub.className = 'peer-sub';
+                sub.textContent = 'Click or drop a file';
+
+                card.append(avatar, nameEl, sub);
+                enableDrop(card, id);
                 grid.appendChild(card);
             });
         }
 
+        // Deterministic hue so each peer keeps a stable, distinct color.
+        function hueForId(id) {
+            let h = 0;
+            for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360;
+            return h;
+        }
+
+        function enableDrop(card, id) {
+            card.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                card.classList.add('drag-over');
+            });
+            card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+            card.addEventListener('drop', (e) => {
+                e.preventDefault();
+                card.classList.remove('drag-over');
+                if (e.dataTransfer.files.length > 0) {
+                    initiateSend(id, e.dataTransfer.files[0]);
+                }
+            });
+        }
+
+        // ---------------------------------------------------------------
+        // Toast
+        // ---------------------------------------------------------------
+        let toastTimer = null;
         function showToast(message) {
             toastEl.textContent = message;
             toastEl.classList.add('active');
-            setTimeout(() => toastEl.classList.remove('active'), 3000);
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toastEl.classList.remove('active'), 3000);
         }
 
+        function escapeHtml(s) {
+            return s.replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        // ---------------------------------------------------------------
+        // Sending
+        // ---------------------------------------------------------------
         function selectPeer(id) {
-            if (pc || outgoingFile) {
+            if (transferActive) {
                 showToast('A transfer is already in progress');
                 return;
             }
             targetPeerId = id;
+            fileInput.value = '';
             fileInput.click();
         }
 
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length === 0) return;
-            outgoingFile = e.target.files[0];
-
-            ws.send(JSON.stringify({
-                type: 'file-offer',
-                to: targetPeerId,
-                fileName: outgoingFile.name,
-                fileSize: outgoingFile.size,
-                fileType: outgoingFile.type
-            }));
-
-            showToast('Waiting for peer to accept...');
+            initiateSend(targetPeerId, e.target.files[0]);
         });
+
+        function initiateSend(peerId, file) {
+            if (!peerId || !peers.has(peerId)) return;
+            if (transferActive) {
+                showToast('A transfer is already in progress');
+                return;
+            }
+            transferActive = true;
+            targetPeerId = peerId;
+            outgoingFile = file;
+
+            wsSend({
+                type: 'file-offer',
+                to: peerId,
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: file.type
+            });
+
+            showToast(`Waiting for ${peers.get(peerId) || 'peer'} to accept…`);
+        }
+
+        // ---------------------------------------------------------------
+        // Receiving (offer queue + confirmation)
+        // ---------------------------------------------------------------
+        function maybeShowNextOffer() {
+            if (transferActive) return;            // busy; will show when free
+            if (modal.classList.contains('active')) return;
+            const offer = pendingOffers.shift();
+            if (!offer) return;
+
+            incomingFileMeta = offer;
+            targetPeerId = offer.from;
+            const sizeStr = formatSize(offer.fileSize);
+            const senderName = peers.get(offer.from) || 'Someone';
+            confirmText.textContent = `${senderName} wants to send you "${offer.fileName}" (${sizeStr})`;
+            modal.classList.add('active');
+        }
+
+        document.getElementById('accept-btn').addEventListener('click', acceptFile);
+        document.getElementById('decline-btn').addEventListener('click', declineFile);
+        document.getElementById('cancel-btn').addEventListener('click', cancelTransfer);
 
         function acceptFile() {
             modal.classList.remove('active');
-            ws.send(JSON.stringify({ type: 'file-accept', to: targetPeerId }));
-            showProgressUI(`Receiving ${incomingFileMeta.fileName}...`);
+            transferActive = true;
+            wsSend({ type: 'file-accept', to: targetPeerId });
+            showProgressUI(`Receiving ${incomingFileMeta.fileName}`, incomingFileMeta.fileSize);
         }
 
         function declineFile() {
             modal.classList.remove('active');
-            ws.send(JSON.stringify({ type: 'file-decline', to: targetPeerId }));
+            wsSend({ type: 'file-decline', to: targetPeerId });
+            incomingFileMeta = null;
+            targetPeerId = null;
+            // Show the next queued offer, if any.
+            setTimeout(maybeShowNextOffer, 100);
+        }
+
+        function cancelTransfer() {
+            if (dataChannel && dataChannel.readyState === 'open') {
+                try { dataChannel.send(JSON.stringify({ type: 'cancel' })); } catch { }
+            }
+            showToast('Transfer cancelled');
             resetTransfer();
         }
 
-        function showProgressUI(label) {
+        // ---------------------------------------------------------------
+        // Progress UI
+        // ---------------------------------------------------------------
+        function showProgressUI(label, total) {
             progressLabel.textContent = label;
             progressBar.style.width = '0%';
             progressPercent.textContent = '0%';
+            progressDetail.textContent = total ? `0 / ${formatSize(total)}` : '';
+            updateProgress.lastPercent = -1;
             progressUi.classList.add('active');
         }
 
         function updateProgress(current, total) {
-            const percent = Math.min(100, Math.round((current / total) * 100));
+            const percent = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
             if (updateProgress.lastPercent !== percent) {
                 updateProgress.lastPercent = percent;
                 progressBar.style.width = `${percent}%`;
                 progressPercent.textContent = `${percent}%`;
+                progressDetail.textContent = `${formatSize(current)} / ${formatSize(total)}`;
             }
         }
 
-        // WebRTC Logic
+        function formatSize(bytes) {
+            if (bytes < 1024) return `${bytes} B`;
+            if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+            if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+            return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+        }
+
+        // ---------------------------------------------------------------
+        // WebRTC
+        // ---------------------------------------------------------------
         const rtcConfig = {
-            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
         };
 
         function setupWebRTC(isInitiator, peerId) {
+            targetPeerId = peerId;
             pc = new RTCPeerConnection(rtcConfig);
 
             pc.onicecandidate = (e) => {
                 if (e.candidate) {
-                    ws.send(JSON.stringify({
-                        type: 'ice-candidate',
-                        to: peerId,
-                        candidate: JSON.stringify(e.candidate)
-                    }));
+                    wsSend({ type: 'ice-candidate', to: peerId, candidate: JSON.stringify(e.candidate) });
                 }
             };
 
             pc.onconnectionstatechange = () => {
-                if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+                if (!pc) return;
+                if (pc.connectionState === 'failed') {
+                    showToast('Connection failed — the peer may be on a restrictive network.');
+                    resetTransfer();
+                } else if (pc.connectionState === 'disconnected') {
                     showToast('Connection lost');
                     resetTransfer();
                 }
             };
 
             if (isInitiator) {
-                dataChannel = pc.createDataChannel('fileTransfer', {
-                    ordered: true
-                });
+                dataChannel = pc.createDataChannel('fileTransfer', { ordered: true });
                 setupDataChannel(dataChannel, true);
-
                 pc.createOffer()
                     .then(offer => pc.setLocalDescription(offer))
-                    .then(() => {
-                        ws.send(JSON.stringify({
-                            type: 'offer',
-                            to: peerId,
-                            sdp: JSON.stringify(pc.localDescription)
-                        }));
-                    });
+                    .then(() => wsSend({ type: 'offer', to: peerId, sdp: JSON.stringify(pc.localDescription) }))
+                    .catch(e => console.error('createOffer failed', e));
             } else {
                 pc.ondatachannel = (e) => {
                     dataChannel = e.channel;
@@ -594,81 +1119,155 @@
 
             channel.onopen = () => {
                 if (isSender) {
-                    showProgressUI(`Sending ${outgoingFile.name}...`);
+                    showProgressUI(`Sending ${outgoingFile.name}`, outgoingFile.size);
                     sendFile();
                 }
             };
 
             channel.onmessage = (e) => {
+                // Control messages are strings; file chunks are ArrayBuffers.
+                if (typeof e.data === 'string') {
+                    let ctrl;
+                    try { ctrl = JSON.parse(e.data); } catch { return; }
+                    if (ctrl.type === 'done' && !isSender) {
+                        finishReceive();
+                    } else if (ctrl.type === 'cancel') {
+                        showToast('The other peer cancelled the transfer');
+                        resetTransfer();
+                    }
+                    return;
+                }
+
                 if (!isSender) {
                     receiveBuffer.push(e.data);
                     receivedSize += e.data.byteLength;
-
                     updateProgress(receivedSize, incomingFileMeta.fileSize);
-
-                    if (receivedSize === incomingFileMeta.fileSize) {
-                        const blob = new Blob(receiveBuffer, { type: incomingFileMeta.fileType || 'application/octet-stream' });
-                        downloadBlob(blob, incomingFileMeta.fileName);
-                        showToast('Transfer complete!');
-                        setTimeout(resetTransfer, 1000);
-                    }
                 }
             };
 
+            channel.onerror = (e) => {
+                console.error('datachannel error', e && (e.error || e));
+            };
+
             channel.onclose = () => {
-                resetTransfer();
+                // If we were receiving and never got the completion signal,
+                // the transfer was truncated.
+                if (!isSender && transferActive && receivedSize < (incomingFileMeta?.fileSize || 0)) {
+                    showToast('Transfer incomplete — connection closed early');
+                    resetTransfer();
+                }
             };
         }
 
         async function sendFile() {
-            const chunkSize = 65536; // 64KB
+            // A DataChannel message larger than the peer's negotiated
+            // maxMessageSize resets the connection. 16 KB is universally safe
+            // across browsers; never exceed the negotiated maximum.
+            const negotiatedMax = (pc && pc.sctp && pc.sctp.maxMessageSize) || 65536;
+            const chunkSize = Math.min(16384, negotiatedMax);
+            const bufferThreshold = 8 * 1024 * 1024; // 8 MB
             let offset = 0;
 
-            while (offset < outgoingFile.size) {
-                // Flow control: Wait if buffer gets too full (e.g., > 16MB)
-                if (dataChannel.bufferedAmount > 16777216) {
-                    await new Promise(resolve => setTimeout(resolve, 5));
-                    continue;
-                }
+            try {
+                while (offset < outgoingFile.size) {
+                    if (!dataChannel || dataChannel.readyState !== 'open') return;
 
-                if (dataChannel.readyState !== 'open') break;
+                    // Flow control: pause while the send buffer is full.
+                    if (dataChannel.bufferedAmount > bufferThreshold) {
+                        await new Promise(r => setTimeout(r, 20));
+                        continue;
+                    }
 
-                const slice = outgoingFile.slice(offset, offset + chunkSize);
-                const buffer = await slice.arrayBuffer();
-
-                try {
+                    const slice = outgoingFile.slice(offset, offset + chunkSize);
+                    const buffer = await slice.arrayBuffer();
+                    if (!dataChannel || dataChannel.readyState !== 'open') return;
                     dataChannel.send(buffer);
-                } catch (e) {
-                    console.error('Send failed:', e);
-                    break;
+                    offset += buffer.byteLength;
+                    updateProgress(offset, outgoingFile.size);
                 }
 
-                offset += buffer.byteLength;
-                updateProgress(offset, outgoingFile.size);
-            }
+                // Drain the buffer so nothing is truncated, THEN signal done.
+                while (dataChannel && dataChannel.readyState === 'open' && dataChannel.bufferedAmount > 0) {
+                    await new Promise(r => setTimeout(r, 50));
+                }
+                if (!dataChannel || dataChannel.readyState !== 'open') return;
 
-            showToast('Transfer complete!');
-            setTimeout(resetTransfer, 1000);
+                dataChannel.send(JSON.stringify({ type: 'done' }));
+                updateProgress(outgoingFile.size, outgoingFile.size);
+                addHistory('out', outgoingFile.name, outgoingFile.size, null);
+                showToast('Transfer complete!');
+                setTimeout(resetTransfer, 1200);
+            } catch (e) {
+                console.error('sendFile failed', e);
+                showToast('Send failed');
+                resetTransfer();
+            }
         }
 
-        function downloadBlob(blob, filename) {
+        function finishReceive() {
+            const meta = incomingFileMeta;
+            const blob = new Blob(receiveBuffer, { type: meta.fileType || 'application/octet-stream' });
             const url = URL.createObjectURL(blob);
+            triggerDownload(url, meta.fileName);
+            addHistory('in', meta.fileName, blob.size, url);
+            showToast('Transfer complete!');
+            setTimeout(resetTransfer, 1200);
+        }
+
+        function triggerDownload(url, filename) {
             const a = document.createElement('a');
             a.href = url;
             a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
+        // ---------------------------------------------------------------
+        // History
+        // ---------------------------------------------------------------
+        function addHistory(dir, name, size, url) {
+            historySection.style.display = 'block';
+            const li = document.createElement('li');
+            li.className = 'history-item';
+
+            const icon = document.createElement('span');
+            icon.className = 'dir';
+            icon.textContent = dir === 'in' ? '⬇️' : '⬆️';
+
+            const meta = document.createElement('div');
+            meta.className = 'meta';
+            const fname = document.createElement('div');
+            fname.className = 'fname';
+            fname.textContent = name;
+            const fsize = document.createElement('div');
+            fsize.className = 'fsize';
+            fsize.textContent = `${dir === 'in' ? 'Received' : 'Sent'} · ${formatSize(size)}`;
+            meta.append(fname, fsize);
+
+            li.append(icon, meta);
+
+            if (url) {
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = name;
+                a.textContent = 'Save again';
+                li.appendChild(a);
+            }
+
+            historyList.prepend(li);
+        }
+
+        // ---------------------------------------------------------------
+        // Teardown
+        // ---------------------------------------------------------------
         function resetTransfer() {
             if (dataChannel) {
-                dataChannel.close();
+                try { dataChannel.close(); } catch { }
                 dataChannel = null;
             }
             if (pc) {
-                pc.close();
+                try { pc.close(); } catch { }
                 pc = null;
             }
             outgoingFile = null;
@@ -676,9 +1275,17 @@
             receiveBuffer = [];
             receivedSize = 0;
             targetPeerId = null;
+            transferActive = false;
             fileInput.value = '';
             progressUi.classList.remove('active');
+            // A queued offer may be waiting for us now.
+            setTimeout(maybeShowNextOffer, 200);
         }
+
+        // Update scope text if the user edits the hash manually.
+        window.addEventListener('hashchange', () => {
+            if (currentRoomCode() !== roomCodeLabel()) location.reload();
+        });
     </script>
 </body>
 

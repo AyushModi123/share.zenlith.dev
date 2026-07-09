@@ -6,37 +6,89 @@ import (
 	"sync"
 )
 
+const (
+	// maxRoomSize caps how many peers may share a single room. Discovery
+	// and broadcasts are O(n) within a room, so this bounds fan-out and
+	// keeps the peer grid usable.
+	maxRoomSize = 50
+	// maxConnsPerIP limits how many simultaneous connections a single
+	// client address may hold, a basic guard against a single origin
+	// exhausting the server.
+	maxConnsPerIP = 20
+)
+
 type Hub struct {
 	mu      sync.RWMutex
-	clients map[string]*Client
+	clients map[string]*Client            // id -> client, for direct routing
+	rooms   map[string]map[string]*Client // room -> set of clients by id
+	ipConns map[string]int                // client ip -> open connection count
 }
 
 func NewHub() *Hub {
 	return &Hub{
 		clients: make(map[string]*Client),
+		rooms:   make(map[string]map[string]*Client),
+		ipConns: make(map[string]int),
 	}
+}
+
+// TryReserveIP records a new connection for the given IP. It returns false
+// if that IP is already at the connection limit, in which case nothing is
+// reserved and the caller should reject the connection.
+func (h *Hub) TryReserveIP(ip string) bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.ipConns[ip] >= maxConnsPerIP {
+		return false
+	}
+	h.ipConns[ip]++
+	return true
+}
+
+// releaseIP is called when a reserved connection goes away (including when a
+// reserved connection is rejected before registering).
+func (h *Hub) releaseIP(ip string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.ipConns[ip] > 0 {
+		h.ipConns[ip]--
+	}
+	if h.ipConns[ip] == 0 {
+		delete(h.ipConns, ip)
+	}
+}
+
+// RoomFull reports whether the named room is already at capacity.
+func (h *Hub) RoomFull(room string) bool {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return len(h.rooms[room]) >= maxRoomSize
 }
 
 func (h *Hub) Register(c *Client) {
 	h.mu.Lock()
 	h.clients[c.id] = c
-	h.mu.Unlock()
+	if h.rooms[c.room] == nil {
+		h.rooms[c.room] = make(map[string]*Client)
+	}
+	h.rooms[c.room][c.id] = c
 
-	// Send the new client a list of existing peers
-	h.mu.RLock()
-	peers := make([]PeerInfo, 0, len(h.clients)-1)
-	for id, existing := range h.clients {
+	// Snapshot existing peers in the same room while we hold the lock.
+	peers := make([]PeerInfo, 0, len(h.rooms[c.room])-1)
+	for id, existing := range h.rooms[c.room] {
 		if id != c.id {
 			peers = append(peers, PeerInfo{ID: id, Name: existing.name})
 		}
 	}
-	h.mu.RUnlock()
+	h.mu.Unlock()
 
-	// Send the new client their own identity first
+	// Send the new client their own identity (including the room they
+	// landed in, so the UI can display and share it).
 	c.send <- mustMarshal(Message{
 		Type: "welcome",
 		From: c.id,
 		Name: c.name,
+		Room: c.room,
 	})
 
 	c.send <- mustMarshal(Message{
@@ -44,49 +96,62 @@ func (h *Hub) Register(c *Client) {
 		Peers: peers,
 	})
 
-	// Broadcast join to everyone else
-	h.broadcast(c.id, Message{
+	// Announce the join to everyone else in the same room only.
+	h.broadcast(c.room, c.id, Message{
 		Type: "peer-joined",
 		From: c.id,
 		Name: c.name,
 	})
 
-	log.Printf("[+] %s (%s) joined — %d peers online", c.name, c.id, h.count())
+	log.Printf("[+] %s (%s) joined room %q — %d in room", c.name, c.id, c.room, h.roomCount(c.room))
 }
 
 func (h *Hub) Unregister(c *Client) {
 	h.mu.Lock()
 	delete(h.clients, c.id)
+	if room := h.rooms[c.room]; room != nil {
+		delete(room, c.id)
+		if len(room) == 0 {
+			delete(h.rooms, c.room)
+		}
+	}
 	h.mu.Unlock()
 
-	h.broadcast(c.id, Message{
+	h.broadcast(c.room, c.id, Message{
 		Type: "peer-left",
 		From: c.id,
 	})
 
-	log.Printf("[-] %s (%s) left — %d peers online", c.name, c.id, h.count())
+	log.Printf("[-] %s (%s) left room %q — %d in room", c.name, c.id, c.room, h.roomCount(c.room))
 }
 
-// Route forwards a message from one client to a specific target client
-func (h *Hub) Route(msg Message) {
+// Route forwards a message from one client to a specific target client. The
+// target must be in the same room as the sender; cross-room delivery is
+// silently dropped so rooms stay isolated.
+func (h *Hub) Route(sender *Client, msg Message) {
 	h.mu.RLock()
 	target, ok := h.clients[msg.To]
+	sameRoom := ok && target.room == sender.room
 	h.mu.RUnlock()
 
-	if !ok {
-		log.Printf("[!] target %s not found for message type %s", msg.To, msg.Type)
+	if !sameRoom {
+		log.Printf("[!] target %s not reachable from %s for message type %s", msg.To, sender.name, msg.Type)
 		return
 	}
 
-	target.send <- mustMarshal(msg)
+	select {
+	case target.send <- mustMarshal(msg):
+	default:
+		log.Printf("[!] send buffer full for %s, dropping message type %s", target.name, msg.Type)
+	}
 }
 
-// broadcast sends a message to all clients except the sender
-func (h *Hub) broadcast(excludeID string, msg Message) {
+// broadcast sends a message to all clients in a room except the sender.
+func (h *Hub) broadcast(room, excludeID string, msg Message) {
 	data := mustMarshal(msg)
 	h.mu.RLock()
 	defer h.mu.RUnlock()
-	for id, c := range h.clients {
+	for id, c := range h.rooms[room] {
 		if id != excludeID {
 			select {
 			case c.send <- data:
@@ -97,10 +162,10 @@ func (h *Hub) broadcast(excludeID string, msg Message) {
 	}
 }
 
-func (h *Hub) count() int {
+func (h *Hub) roomCount(room string) int {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
-	return len(h.clients)
+	return len(h.rooms[room])
 }
 
 func mustMarshal(v any) []byte {

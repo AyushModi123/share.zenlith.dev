@@ -14,20 +14,30 @@ const (
 	pingPeriod     = (pongWait * 9) / 10
 	maxMessageSize = 4096 // signal messages only, never file data
 	sendBufferSize = 64
+
+	// Signaling is bursty (a single connection attempt emits many ICE
+	// candidates), so the limit is generous. It only exists to stop a
+	// client from flooding the room with messages.
+	msgsPerWindow = 60
+	rateWindow    = time.Second
 )
 
 type Client struct {
 	id   string
 	name string
+	room string
+	ip   string
 	hub  *Hub
 	conn *websocket.Conn
 	send chan []byte
 }
 
-func NewClient(id, name string, hub *Hub, conn *websocket.Conn) *Client {
+func NewClient(id, name, room, ip string, hub *Hub, conn *websocket.Conn) *Client {
 	return &Client{
 		id:   id,
 		name: name,
+		room: room,
+		ip:   ip,
 		hub:  hub,
 		conn: conn,
 		send: make(chan []byte, sendBufferSize),
@@ -48,6 +58,10 @@ func (c *Client) ReadPump() {
 		return nil
 	})
 
+	// Simple fixed-window rate limiter.
+	windowStart := time.Now()
+	var windowCount int
+
 	for {
 		_, raw, err := c.conn.ReadMessage()
 		if err != nil {
@@ -57,6 +71,16 @@ func (c *Client) ReadPump() {
 			break
 		}
 
+		if now := time.Now(); now.Sub(windowStart) > rateWindow {
+			windowStart = now
+			windowCount = 0
+		}
+		windowCount++
+		if windowCount > msgsPerWindow {
+			log.Printf("[!] rate limit exceeded by %s, dropping message", c.name)
+			continue
+		}
+
 		var msg Message
 		if err := json.Unmarshal(raw, &msg); err != nil {
 			log.Printf("[!] invalid message from %s: %v", c.name, err)
@@ -64,6 +88,7 @@ func (c *Client) ReadPump() {
 		}
 
 		msg.From = c.id // always set from server side, never trust client
+		msg.Room = ""   // clients never set the room; it is server state only
 
 		switch msg.Type {
 		case "offer", "answer", "ice-candidate", "file-offer", "file-accept", "file-decline":
@@ -71,7 +96,7 @@ func (c *Client) ReadPump() {
 				log.Printf("[!] message type %s missing 'to' field from %s", msg.Type, c.name)
 				continue
 			}
-			c.hub.Route(msg)
+			c.hub.Route(c, msg)
 		default:
 			log.Printf("[!] unknown message type '%s' from %s", msg.Type, c.name)
 		}
