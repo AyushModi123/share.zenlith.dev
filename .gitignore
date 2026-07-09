@@ -1,0 +1,7 @@
+# Build artifacts
+/share-server
+/share-server.exe
+*.exe
+
+# Local editor/tooling
+/.claude/

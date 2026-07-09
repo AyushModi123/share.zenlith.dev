@@ -1145,6 +1145,10 @@
                 }
             };
 
+            channel.onerror = (e) => {
+                console.error('datachannel error', e && (e.error || e));
+            };
+
             channel.onclose = () => {
                 // If we were receiving and never got the completion signal,
                 // the transfer was truncated.
@@ -1156,8 +1160,12 @@
         }
 
         async function sendFile() {
-            const chunkSize = 65536; // 64 KB
-            const bufferThreshold = 16 * 1024 * 1024; // 16 MB
+            // A DataChannel message larger than the peer's negotiated
+            // maxMessageSize resets the connection. 16 KB is universally safe
+            // across browsers; never exceed the negotiated maximum.
+            const negotiatedMax = (pc && pc.sctp && pc.sctp.maxMessageSize) || 65536;
+            const chunkSize = Math.min(16384, negotiatedMax);
+            const bufferThreshold = 8 * 1024 * 1024; // 8 MB
             let offset = 0;
 
             try {
