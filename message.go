@@ -10,6 +10,11 @@ type Message struct {
 	To   string `json:"to,omitempty"`
 	Name string `json:"name,omitempty"`
 
+	// Room the client belongs to (sent in the welcome message so the
+	// client can display and share it). Peers only ever see others in
+	// the same room.
+	Room string `json:"room,omitempty"`
+
 	// Peer list (sent once on join)
 	Peers []PeerInfo `json:"peers,omitempty"`
 
